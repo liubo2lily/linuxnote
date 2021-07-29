@@ -12,9 +12,7 @@ $ git rebase <name>					#变基name为主导如master，将切出来的分支的
 $ git rebase --continue				#继续下一个commit的rebase
 ```
 
-# git功能分布图
 
-![git struct](Picture/git struct.png)
 
 
 
