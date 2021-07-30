@@ -38,3 +38,25 @@ static int gpio_key_probe(struct platform_device *pdev)
 }
 ```
 
+| descriptor-based       | legacy                |
+| ---------------------- | --------------------- |
+| 获得GPIO               |                       |
+| gpiod_get              | gpio_request          |
+| gpiod_get_index        |                       |
+| gpiod_get_array        | gpio_request_array    |
+| devm_gpiod_get         |                       |
+| devm_gpiod_get_index   |                       |
+| devm_gpiod_get_array   |                       |
+| 设置方向               |                       |
+| gpiod_direction_input  | gpio_direction_input  |
+| gpiod_direction_output | gpio_direction_output |
+| 读值、写值             |                       |
+| gpiod_get_value        | gpio_get_value        |
+| gpiod_set_value        | gpio_set_value        |
+| 释放GPIO               |                       |
+| gpio_free              | gpio_free             |
+| gpiod_put              | gpio_free_array       |
+| gpiod_put_array        |                       |
+| devm_gpiod_put         |                       |
+| devm_gpiod_put_array   |                       |
+

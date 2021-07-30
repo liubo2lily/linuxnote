@@ -60,6 +60,17 @@ memory {
 };
 ```
 
+**aliases节点**
+
+给其他的节点起个别名
+
+```shell
+aliases {
+	i2c0 = &xxxi2c2;
+	i2c1 = &xxxi2c0;
+};
+```
+
 *****
 
 # 2 相关常用函数
@@ -242,4 +253,10 @@ int of_get_gpio(struct device_node *np, int index);
 使用此函数，那么定义gpio属性一定要以gpios来命名
 
 *****
+
+# 5 设备树中快速找到设备节点
+
+```shell
+dtc -I dtb -O dts xxx.dtb > target.dts
+```
 
