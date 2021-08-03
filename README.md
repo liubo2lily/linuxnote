@@ -1,2 +1,0 @@
-# MDNote
-MDNote in study.

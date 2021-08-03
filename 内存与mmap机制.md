@@ -1,4 +1,4 @@
-# 1 MMU二级页表映射关系
+## 1 MMU二级页表映射关系
 
 
 
@@ -11,7 +11,7 @@ flowchart LR
 
 
 
-# 2 带cache的系统数据传输机制
+## 2 带cache的系统数据传输机制
 
 ```mermaid
 flowchart LR
@@ -22,7 +22,7 @@ flowchart LR
 	\n主存\n\n<--字/字节访问\n低速-->\n处理器\n内核\n\n
 ```
 
-## 2.1 写入的四种方式
+### 2.1 写入的四种方式
 
  根据是否使用**Cache**和**写缓冲器**可产生四种写数据的组合。
 
@@ -41,17 +41,17 @@ flowchart LR
 
 方式4：适合于一般的内存读写。
 
-## 2.2 禁用Cache的场合
+### 2.2 禁用Cache的场合
 
 **Register**、**FrameBuffer**、**DMA**等需要数据一直是同步的情况。
 
-# 3 mmap机制
+## 3 mmap机制
 
-## 3.0 引言
+### 3.0 引言
 
 对于需要大量数据读写的操作，常规的read和write太过耗时和繁琐，因此需要一种直接读写内存的方式，这种方式就是**mmap**，即内存映射。
 
-## 3.1 驱动程序需要做的事情
+### 3.1 驱动程序需要做的事情
 
 **1. 确定物理地址（分配）**
 
@@ -61,7 +61,7 @@ flowchart LR
 
 根据以上三步,即可完成内核态的程序编写.
 
-## 3.2 框架描述-内核态
+### 3.2 框架描述-内核态
 
 **a. 定义编写xxx_drv_mmap函数并初始化file_operations结构体**
 
@@ -136,7 +136,7 @@ if (remap_pfn_range(vma, vma->vm_start, phy >> PAGE_SHIFT,		/* divide page size 
 kfree(kernel_buf);
 ```
 
-## 3.2 框架描述-用户态
+### 3.2 框架描述-用户态
 
 **a. 调用mmap获取内存**
 

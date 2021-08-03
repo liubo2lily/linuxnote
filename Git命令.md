@@ -1,8 +1,8 @@
-# git命令速查表
+## git命令速查表
 
-<img src="Picture/git.png" alt="git" style="zoom:50%;" />
+<img src="pic/git/git.png" />
 
-# 补充
+## 补充
 
 ```shell
 $ git reflog						#查看包括回退之前的所有记录，用于将代码从回退拉到最新
