@@ -65,33 +65,10 @@ mygpio {
 * gpio-controller : 表明这是一个GPIO控制器
 * gpio-cells : 指定除了第一个参数以外，还有多少个cell(就是整数)来描述一个引脚
 
-### 2. 编写驱动程序（部分代码）
+### 2. 编写驱动程序
 
-```c
-static struct gpio_chip * g_virt_gpio;
-static int virt_gpio_direction_output(struct gpio_chip *gc,unsigned offset, int val){return 0;}
-static int virt_gpio_direction_input(struct gpio_chip *chip,unsigned offset){return 0;}
-static int virt_gpio_get_value(struct gpio_chip *gc, unsigned offset){int val;/*...*/return val;}
-static void virt_gpio_set_value(struct gpio_chip *gc,unsigned offset, int val) {}
-static int virtual_gpio_probe(struct platform_device *pdev)
-{
-	int ret;
-	u32 value;	
-	g_virt_gpio = devm_kzalloc(&pdev->dev, sizeof(*g_virt_gpio), GFP_KERNEL);	/* 1. 分配gpio_chip */
-	g_virt_gpio->label = pdev->name;											/* 2. 设置gpio_chip */
-	g_virt_gpio->direction_output = virt_gpio_direction_output;					/* 2.1 设置函数 */
-	g_virt_gpio->direction_input  = virt_gpio_direction_input;
-	g_virt_gpio->get = virt_gpio_get_value;
-	g_virt_gpio->set = virt_gpio_set_value;
-	g_virt_gpio->parent = &pdev->dev;
-	g_virt_gpio->owner = THIS_MODULE;
-	g_virt_gpio->base = -1;														/* 设置ngpio base等 base取-1，由系统自动分配 */
-	ret = of_property_read_u32(pdev->dev.of_node, "ngpios", &value);
-	g_virt_gpio->ngpio = value;
-	ret = devm_gpiochip_add_data(&pdev->dev, g_virt_gpio, NULL);				/* 3. 注册gpio_chip */
-	return 0;
-}
-```
+**示例代码**[virtual_gpio_driver.c](code\gpio\virtual_gpio_driver.c) 
+
 
 
 # 三、GPIO使用Pinctrl
