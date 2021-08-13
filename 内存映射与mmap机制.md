@@ -1,4 +1,68 @@
-## 1 MMU二级页表映射关系
+
+
+参考资料
+
+* arm linux内存分布  https://blog.csdn.net/dahailantian1/article/details/78584846
+
+## 0. Arm Linux内存管理
+
+* Linux以页为内存管理基本单元，以PAGESIZE定义，一般为0x1000，即4k
+
+### 0.1 Arm LInux内存分区
+
+内存空间粗分为用户空间和内核空间，用户空间分布一般为0-3GB(PAGE_OFFSET)，以0xc0000000为分界，内核空间的虚拟地址被所有进程所共享
+
+**内存分布情况如下**
+
+![memory_map](pic/memory/memory_map.png)
+
+
+
+**应用进程地址空间**
+
+![user_memory](pic/memory/user_memory.png)
+
+### 0.2 虚拟地址于物理地址互转
+
+```c
+unsigned long virt_to_phys(volatile void *address);
+void *phys_to_virt(unsigned long address);
+```
+
+这两个函数只适合DMA映射区及直接映射区
+
+### 0.3 动态申请内存空间(带z代表自动memset)
+
+**kmalloc（连续）**
+
+```c
+void *kmalloc(size_t size, gfp_t flags);
+void * devm_kmalloc(struct device *dev, size_t size, gfp_t gfp);
+void * devm_kcalloc(struct device * dev, size_t n, size_t size, gfp_t flags)
+void *kzalloc(size_t size, gfp_t flags);
+void kfree(const void *objp);
+```
+
+flags通常是GFP_KERNEL，但无法申请时，进程会睡眠，因此在中断上下文或持有自旋锁的时候，不能使用，应该用GFP_ATOMIC
+
+**vmalloc（非连续）**
+
+```c
+void *vmalloc(unsigned long size);
+void *vzalloc(unsigned long size);
+void vfree(const void * addr);
+```
+
+该种方式开销较大，小空间分配最好别用，一般为无硬件意义的缓冲区分配内存
+
+**slab**
+
+可以保留任意数目且全部同样大小的后被缓存，用来解决以页为基本单位造成的内存浪费
+
+
+
+
+## 1. MMU二级页表映射关系
 
 
 
@@ -11,7 +75,7 @@ flowchart LR
 
 
 
-## 2 带cache的系统数据传输机制
+## 2. 带cache的系统数据传输机制
 
 ```mermaid
 flowchart LR
@@ -29,7 +93,7 @@ flowchart LR
 | enable Cache? | enable Write Buffer? | Explain                         |
 | ------------- | -------------------- | ------------------------------- |
 | 0             | 0                    | Non-cached, non-buffered (NCNB) |
-| 0             | 1                    | Non-cached buffered (NCB)       |
+| 0             | 1                    | write-combine(WC)               |
 | 1             | 0                    | Cached, write-through mode (WT) |
 | 1             | 1                    | Cached, write-back mode (WB)    |
 
@@ -45,13 +109,35 @@ flowchart LR
 
 **Register**、**FrameBuffer**、**DMA**等需要数据一直是同步的情况。
 
-## 3 mmap机制
+## 3. io映射及读写
 
-### 3.0 引言
+### 3.1 io映射
+
+```c
+void __iomem *ioremap(resource_size_t res_cookie, size_t size);
+void __iomem *devm_ioremap(struct device *dev, resource_size_t offset, resource_size_t size);
+void iounmap(volatile void __iomem *cookie);
+```
+
+### 3.2 io读写
+
+```c
+u8 readb(const volatile void __iomem *addr);
+u16 readw(const volatile void __iomem *addr);
+u32 readl(const volatile void __iomem *addr);
+void writeb(u8 value, volatile void __iomem *addr);
+void writew(u16 value, volatile void __iomem *addr);
+void writel(u32 value, volatile void __iomem *addr);
+//后接__relaxed表示不加内存屏障
+```
+
+## 4. mmap机制
+
+### 4.0 引言
 
 对于需要大量数据读写的操作，常规的read和write太过耗时和繁琐，因此需要一种直接读写内存的方式，这种方式就是**mmap**，即内存映射。
 
-### 3.1 驱动程序需要做的事情
+### 4.1 驱动程序需要做的事情
 
 **1. 确定物理地址（分配）**
 
@@ -61,7 +147,7 @@ flowchart LR
 
 根据以上三步,即可完成内核态的程序编写.
 
-### 3.2 框架描述-内核态
+### 4.2 框架描述-内核态
 
 **a. 定义编写xxx_drv_mmap函数并初始化file_operations结构体**
 
@@ -136,7 +222,7 @@ if (remap_pfn_range(vma, vma->vm_start, phy >> PAGE_SHIFT,		/* divide page size 
 kfree(kernel_buf);
 ```
 
-### 3.2 框架描述-用户态
+### 4.3 框架描述-用户态
 
 **a. 调用mmap获取内存**
 
