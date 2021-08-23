@@ -2,6 +2,8 @@
 
 * /Documentation/devicetree/bindings/dma/snps-dma.txt
 * /Documentation/devicetree/bindings/dma/dma.txt
+* http://www.wowotech.net/linux_kenrel/dma_engine_overview.html
+* http://www.wowotech.net/linux_kenrel/dma_controller_driver.html
 
 Q&A
 
@@ -98,3 +100,42 @@ serial@e0000000 {
 * 其他参数（地址递增顺序，触发方式，一次连续搬多少个数据）
 * 启动DMA
 * DMA传输完，会产生DMA中断
+
+```c
+bootspi0: bootspi0@f5001000 {
+    compatible = "snps,dw-apb-ssi";
+    #address-cells = <1>;
+    #size-cells = <0>;
+    reg = <0xf5001000 0x1000>;
+    interrupts = <GIC_SPI 56 IRQ_TYPE_LEVEL_HIGH>;
+    num-cs = <1>;
+    status = "okay";
+    dma-names = "rx", "tx";
+    dmas      = <&dmac 25 0 0>, <&dmac 26 0 0>;
+    cs-gpios =  <&gpio1 11 GPIO_ACTIVE_HIGH>;
+    pinctrl-names = "default";
+    pinctrl-0 = <&pinctrl_bspi>;
+    reg-io-width = <4>; /* 寄存器的宽度为32，4个字节 */
+
+    flash0: s25fl128s@0 {
+        reg = <0>;
+        #address-cells = <1>;
+        #size-cells = <1>;
+        compatible = "s25fl128s";
+        spi-max-frequency = <500000>;
+    };
+
+};
+```
+
+
+
+代码改了哪里
+
+```c
+static struct dw_dma_slave mid_dma_tx = { .dst_id = 26 };
+static struct dw_dma_slave mid_dma_rx = { .src_id = 25 };
+
+
+```
+

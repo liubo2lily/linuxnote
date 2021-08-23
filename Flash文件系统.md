@@ -268,3 +268,18 @@ inode内容
 **bitmap**
 
 位图，用一个位来代表一个粒度数据的分配情况
+
+### 6.3 如何挂载文件系统
+
+```shell
+$ cat /etc/fstab		#定义的文件系统
+# <file system> <mount pt>      <type>  <options>       <dump>  <pass>
+/dev/root       /               ext2    rw,noauto       0       1
+proc            /proc           proc    defaults        0       0
+tmpfs           /tmp            tmpfs   mode=1777       0       0
+sysfs           /sys            sysfs   defaults        0       0
+debugfs          /sys/kernel/debug      debugfs  defaults  0 0
+
+$ vi /etc/init.d/rcS	#开机自启动脚本中mount -a
+```
+
