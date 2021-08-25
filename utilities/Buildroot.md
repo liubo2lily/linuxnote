@@ -100,7 +100,12 @@ Filesystem images  ---> #配置文件系统
 ```shell
 Target packages  ---> #目标应用配置 
 #自己选，或者
-$ make <pkg>-rebuild #单独编译某个软件包,e.g.:stress-ng-rebuild
+$ sudo make <pkg>-rebuild #单独编译某个软件包,e.g.:stress-ng-rebuild
+#可能直接编译出的包，还需要二次编译，如存在configure文件则执行下列万能命令
+$ sudo ./configure --host=arm-buildroot-linux-gnueabihf --prefix=$PWD/tmp
+$ sudo make
+$ sudo make install
+$ ls tmp
 ```
 
 ### 5.2 编译自己的应用包(TODO)

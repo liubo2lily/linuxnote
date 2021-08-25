@@ -8,11 +8,12 @@
 
 编译选项补充
 
-* -c	只编译不链接
-
-* -I	指定头文件目录
-
-* -v	展示编译完整过程
+```shell
+-c	# 只编译不链接
+-I	# 指定头文件目录
+-l    # 指定编译库，-lm添加数学库
+-v	# 展示编译完整过程
+```
 
 静态库制作.a
 
@@ -39,7 +40,8 @@ $ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:<自己的目录> #运行时指定动�
 ```shell
 $ gcc -E -dM main.c > 1.txt					#把所有宏展开，放在文件里
 $ gcc -Wp,-MD,abc.dep -c -o main.o main.c 	#生成依赖文件
-$ echo 'main(){}' | gcc -E -v - #会列出涉及到的头文件目录以及库目录
+$ echo 'main(){}' | gcc -E -v - #会打印出库和头文件目录
+$ gcc -finput-charset=GB2312 -fexec-charset=UTF-i -o xx xx.c #指定字符集，默认UTF-8
 ```
 
 ## Makefile
