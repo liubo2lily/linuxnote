@@ -79,9 +79,6 @@ System configuration  ---> #系统配置
   -> /dev management = Dynamic using devtmpfs + mdev #设备节点管理方式
   -> [*] Enable root login with password (NEW) #开机密码
   -> Root password = 123456
-
-$ sudo make
-
 ```
 
 ## 4. 生成根文件系统
@@ -91,6 +88,8 @@ Filesystem images  ---> #配置文件系统
   -> [*] ext2/3/4 root filesystem #如果是 EMMC 或 SD 卡的话就用 ext3/ext4 
   -> ext2/3/4 variant = ext4 #选择 ext4 格式 
   -> [*] ubi image containing an ubifs root filesystem #如果使用 NAND 的话就用 ubifs 
+  
+.tar文件就是构建出的根文件系统
 ```
 
 ## 5. 编译应用包
