@@ -1,9 +1,6 @@
 **参考资料**
 
-* flash支持哪些文件系统 https://blog.csdn.net/u013178472/article/details/72864428
-* Cramfs、JFFS2、YAFFS2 https://blog.csdn.net/daofengdeba/article/details/7721340
 * flash分类 http://www.linux-mtd.infradead.org/doc/ubifs.html#L_raw_vs_ftl
-* ubi子系统原理分析 https://www.cnblogs.com/gmpy/p/10874475.html
 * flash文件系统性能评估 https://elinux.org/images/a/ab/Flash-filesystems.pdf
 * Nandflash下各文件系统性能 https://elinux.org/images/7/7e/ELC2009-FlashFS-Toshiba.pdf
 
@@ -43,9 +40,9 @@ $ mkfs.jffs2 -d mtd_test/ -o test.jffs2 -e 0x2000 -l
 * -e 指定擦除块大小
 * -l 指定小端模式
 
-#### 2. yaffs2**不在主线上，需要内核打补丁才能mount**
+#### 2. yaffs2(not in Mainline)
 
-不在mainline，需要下三方工具mkyaffs2imagehttps://code.google.com/archive/p/fatplus/downloads?page=2
+第三方工具mkyaffs2imagehttps://code.google.com/archive/p/fatplus/downloads?page=2
 
 ```shell
 $ ~/tool/mkyaffs2image mtd_test/ test.yaffs2
@@ -87,8 +84,6 @@ $ sudo mount -t yaffs2 /dev/mtdblock0 /mnt
 $ sudo mount -t ubifs /dev/mtdblock0 /mnt
 $ sudo umount /dev/mtdblock0
 ```
-
-
 
 ## 2. mtd分区方法
 

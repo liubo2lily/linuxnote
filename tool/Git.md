@@ -15,6 +15,15 @@ $ git stash pop
 #merge的时候一定要先pull
 ```
 
+### 从命令行创建一个新的仓库
 
+```shell
+touch README.md
+git init
 
+git add README.md
+git commit -m "first commit"
+git remote add origin http://192.168.10.138:8081/seehi_SW/testSuite.git
+git push -u origin master
+```
 

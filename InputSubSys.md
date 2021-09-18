@@ -49,7 +49,7 @@ cp  /mnt/tslib-1.21/tmp/etc/ts.conf  -d  /etc
 
 ![01_tslib_frame](pic/input/01_tslib_frame.png)
 
-* 示例代码  [mt_cal_distance.c](code\input\mt_cal_distance.c) 
+* 示例代码  [触摸屏两手指距离测算](code\input\mt_cal_distance.c) 
 
 ## 2. Input子系统框架
 

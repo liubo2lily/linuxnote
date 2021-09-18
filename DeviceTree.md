@@ -1,13 +1,6 @@
-## 0. 前言
-
-+ **驱动中有关设备树的函数为啥都以of开头？**
-
-  答：因为设备树的起源就是OpenFirmware，简称OF。
-
-
 ## 1. 设备树基本结构
 
-### 1.1 节点结构
+#### 1.1 节点结构
 
 ```c
 [label:] node-name[@unit-address] {
@@ -16,46 +9,17 @@
 };
 ```
 
-其中label表示节点标签，方便其他节点将其引用或后期对节点进行修改，用&label实现 (若无标签，则只能引用路径了)；
-
-@unit-address用于标注节点地址，可以用来定义名字相同但地址不同的节点如memory@0x200、memory@0x300
-
-- **要覆盖的属性要把节点卸载根节点外面**
-
-### 1.2 根节点属性
-
-```c
-/ {
-	#address-cells = <1>;				//使用多少个u32来表述地址
-    #size-cells = <1>;					//使用多少个u32来表述size
-    compatible = "SeeHi,SeeHi-FPGA";	//用来指定内核中哪个machine_desc可以支持本设备
-    model = "APE1210 FPGA 20210524";	//具体知名哪个板子
-};
-```
-
-
-### 1.3 常用Property（属性）
-
-|     属性名     |                             功能                             |
-| :------------: | :----------------------------------------------------------: |
-| #address-cells |                   address占用多少个32位数                    |
-|  #size-cells   |                     size占用多少个32位数                     |
-|   compatible   |         对应驱动程序中的compatible用于绑定设备与驱动         |
-|     model      |            与compatible类似，可以具体指定兼容设备            |
-|     status     | 定义设备状态，"okay"-正常运行, "disabled"-临时关闭,"fail"-发生严重错误,需要修复, "fail-sss"-跟错误信息 |
-|      reg       |   用于描述一个寄存器或一段空间，格式ret = <address, size>    |
-
 属性取值中[]代表字节数组，代表16进制，且可以忽略数与数之间的空格
 
-### 1.4 常用节点
+#### 1.2 常用节点
 
-**预留空间**
+* 预留空间
 
 ```c
 /memreserve/ 0x00000000 0x00400000;
 ```
 
-**chosen节点**
+* chosen节点
 
 可以通过dts向内核传入一些参数, 可在节点中设置bootargs属性
 
@@ -65,7 +29,7 @@ chosen {
 };
 ```
 
-**memory节点**
+* memory节点
 
 定义具体板子使用的内存基地址和大小
 
@@ -78,11 +42,11 @@ memory {
 
 memory节点必须指定device_type属性，且赋值为"memory"
 
-**cpu节点**
+* cpu节点
 
 涉及到cpus和cpu等有机会接触到多核再说，这个也要制定device_type
 
-**aliases节点**
+* aliases节点
 
 给其他的节点起个别名
 
@@ -97,7 +61,7 @@ aliases {
 ## 2. 相关常用函数
 
 
-### 2.1 查找结点
+#### 2.1 查找结点
 
 + **of_find_node_by_path		//根据路径查找结点**
 
@@ -148,7 +112,7 @@ struct device_node *of_get_next_available_child(const struct device_node *node, 
 与of_get_next_child相比跳过了"disabled"状态节点。
 
 
-### 2.2 查找某个属性
+#### 2.2 查找某个属性
 
 + **of_find_property	//找到节点中的属性**
 
@@ -159,7 +123,7 @@ struct property *of_find_property(const struct device_node *np, const char *name
 参数name代表属性名；参数lenp保存属性值的长度
 
 
-### 2.3 获取属性的值
+#### 2.3 获取属性的值
 
 + **of_get_property	//根据名字找到节点的属性，并返回它的值**
 
@@ -181,7 +145,6 @@ int of_property_count_elems_of_size(const struct device_node *np, const char *pr
 
 ```c
 int of_property_read_u32(const struct device_node *np, const char *propname, u32 *out_value);
-int of_property_read_u64(const struct device_node *np, const char *propname, u64 *out_value);
 ```
 
 参数propname表示需要读取的属性名；参数out_value保存读取的值
@@ -189,8 +152,7 @@ int of_property_read_u64(const struct device_node *np, const char *propname, u64
 + **of_property_read_u32	//读取指定位置u32**
 
 ```c
-int of_property_read_u32_index(const struct device_node *np, const char *propname, u32 index, 
-                               u32 *out_value);
+int of_property_read_u32_index(const struct device_node *np, const char *propname, u32 index, u32 *out_value);
 ```
 
 参数propname表示需要读取的属性名；参数out_value保存读取的值；参数index代表读取位置
@@ -198,14 +160,8 @@ int of_property_read_u32_index(const struct device_node *np, const char *propnam
 + **of_property_read_variable_u8/u16/u32/u64_array	//读取数组**
 
 ```c
-int of_property_read_variable_u8_array(const struct device_node *np,
-                    const char *propname, u8 *out_values, size_t sz_min, size_t sz_max);
-int of_property_read_variable_u16_array(const struct device_node *np,
-                    const char *propname, u16 *out_values, size_t sz_min, size_t sz_max);
 int of_property_read_variable_u32_array(const struct device_node *np,
                     const char *propname, u32 *out_values, size_t sz_min, size_t sz_max);
-int of_property_read_variable_u64_array(const struct device_node *np,
-                    const char *propname, u64 *out_values, size_t sz_min, size_t sz_max);
 ```
 
 参数sz_min与sz_max用以限制值的长度，如果不满足两者，则一个数都读不到
@@ -218,33 +174,26 @@ int of_property_read_string(const struct device_node *np, const char *propname, 
 
 参数propname表示需要读取的属性名；参数out_string保存读取的字符串
 
-****
-
-## 3 如何在驱动中获取设备节点
+#### 2.4 驱动中获取设备节点
 
 ```c
 struct device_node *node = pdev->dev.of_node;
 ```
 
-pdev的dev成员中的of_node成员就代表了设备节点
+## 3. 设备树节点与平台设备的转换
 
-## 4. 设备树节点与平台设备的转换
-
-根节点的孩子只要包含了compatible属性，就会生成相应的platform_device，但是孩子的孩子，就交由根节点的孩子处理了，比如I2C控制器节点下的节点，以为着这个I2C控制器下面挂接的设备，它尽管有compatible属性，但是它是由I2C控制器驱动程序来分配结构体的，**i2c=>i2c_client、spi=>spi_device**，但也可以通过其他属性使孙子节点转换为platform_device。
+对于i2c或spi节点的孩子，compatible属性添加simple-bus，就会转换为platform device.
 
 ```c
-test {
-	compatible = "test";
+i2c {
     test1 {
         compatible = "test1", "simple-bus";
     };
 };
 ```
 
-指定了simple-bus，就会转换了，与之类似的还有"simple-mfd"，"isa"，"arm-amba-bus"
 
-
-## 5. GPIO设备树相关
+## 4. GPIO设备树相关
 
 + **of_gpio_named_count	//根据名字获取节点定义的gpio个数**
 
@@ -284,14 +233,7 @@ int of_get_gpio(struct device_node *np, int index);
 
 使用此函数，那么定义gpio属性一定要以gpios来命名
 
-
-## 6. 设备树中快速找到设备节点
-
-```shell
-dtc -I dtb -O dts xxx.dtb > target.dts
-```
-
-## 7. 在sys中查看设备树
+## 5. 在sys中查看设备树
 
 ```shell
 $ cd /sys/firmware && ls
@@ -305,4 +247,3 @@ clocks                         psci
 compatible 
 #设备树中的每个节点都可以在这里寻找
 ```
-

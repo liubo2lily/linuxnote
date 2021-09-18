@@ -55,38 +55,17 @@ flowchart LR
 
 示例代码： [serial_send_recv.c](..\code\uart\serial_send_recv.c)  [gps_read.c](..\code\uart\gps_read.c) 
 
-## 3. 字符驱动新的注册方法
+## 3. uart子系统情景分析
 
-```c
-struct cdev xxx_cdev;
-static int __init xxx_init(void)
-{
-    int rc;
-    dev_t devid;
-    int major;
-    /* 有主设备号：register_chrdev_region, 无主设备号：alloc_chrdev_region */
-    rc = alloc_chrdev_region(&devid, 0, 1, "devname");	/* 分配cdev */
-    major = MAJOR(devid);
-    cdev_init(&xxx_cdev, &xxx_fpos);	/* 设置cdev */
-    cdev_add(&xxx_cdev, devid, 1);		/* 注册cdev */
-}
-static void __exit xxx_exit(void)
-{
-    cdev_del(&xxx_cdev);
-    unregister_chrdev_region(MKDEV(major,0), 1);
-}
-```
-## 4.uart子系统情景分析
-
-### 4.1 驱动框架
+#### 3.1 驱动框架
 
 ![11_tty_driver_level](pic/uart/02_tty_driver_level.png)
 
-### 4.2 注册过程分析
+#### 3.2 注册过程分析
 
 ![image-20210722144332774](pic/uart/03_uart_driver_register.png)
 
-### 4.3 UART驱动情景分析_open
+#### 3.3 UART驱动情景分析_open
 
 * 找到tty_driver
 
@@ -101,7 +80,7 @@ static void __exit xxx_exit(void)
         * uart_port_startup(tty, state, init_hw);
           * 调用uart_port->ops->startup   // ops是struct uart_ops指针类型
 
-### 4.4 UART驱动情景分析_read
+#### 3.4 UART驱动情景分析_read
 
 * 行规程注册
 
@@ -157,7 +136,7 @@ imx_rxint
 				// 对应flush_to_ldisc函数
 ```
 
-### 4.5 UART驱动情景分析_write
+#### 3.5 UART驱动情景分析_write
 
 * write过程分析
   * APP写，使用行规程来写，数据最终存入uart_state->xmit的buffer里
@@ -184,9 +163,9 @@ imx_txint
 		sport->port.icount.tx++;	//更新统计数据
 ```
 
-## 5. UART驱动调试方法
+## 4. UART驱动调试方法
 
-### 5.1 proc文件
+#### 4.1 proc文件
 
 * /proc/interrupts(查看发生中断次数)
 
@@ -196,7 +175,7 @@ imx_txint
 
 * /proc/tty/ldiscs(查看有哪些行规程)
 
-### 5.2 sys文件
+#### 4.2 sys文件
 
 `static DEVICE_ATTR(type, s_IRUSR | S_IRGRP, uart_get_attr_type, NULL);`由以上宏定义去推到sys
 
@@ -205,7 +184,7 @@ cd /sys
 find -name uartclk  // 就可以找到这些文件所在目录
 ```
 
-## 6. 虚拟UART驱动
+## 5. 虚拟UART驱动
 
 ![image-20210730142813809](pic/uart/04_uart_driver.png)
 
@@ -233,7 +212,7 @@ fs/proc/cmdline.c:26:   proc_create("cmdline", 0, NULL, &cmdline_proc_fops);#参
 
 * 示例代码  [virtual_uart.c](..\code\uart\virtual_uart.c) 
 
-## 7.printk
+## 6.printk
 
 
 * 涉及到的宏
@@ -306,9 +285,9 @@ console_unlock
     }
 ```
 
-## 8. Console
+## 7. Console
 
-### 8.1 Console结构体
+#### 7.1 Console结构体
 
 ```c
 struct console {
@@ -339,7 +318,7 @@ struct console {
 };
 ```
 
-### 8.2 Console驱动注册过程
+#### 7.2 Console驱动注册过程
 
 * **处理命令行参数**
 
@@ -402,11 +381,11 @@ struct tty_driver *console_device(int *index)
 }
 ```
 
-### 8.2 虚拟uart补充console
+#### 7.3 虚拟uart补充console
 
 * 示例代码  [virtual_uart_console.c](..\code\uart\virtual_uart_console.c) 
 
-## 9. 早期打印
+## 8. early_printk
 
 * 核心思想，较早的register_console
 
@@ -440,7 +419,7 @@ struct tty_driver *console_device(int *index)
 
   * write函数写什么寄存器？在"addr"参数里确定
 
-## 10. RS485
+## 9. RS485
 
 * 参考 Linux 4.9.88`Documentation\serial\serial-rs485.txt` Linux 5.4`Documentation\driver-api\serial\serial-rs485.rst`
 
@@ -453,7 +432,7 @@ struct tty_driver *console_device(int *index)
 
 若驱动程序足够完善，则无需在应用层设置RTS。
 
-## 11. 常见问题
+## 10. 常见问题
 
 配置设备树报-28错误
 

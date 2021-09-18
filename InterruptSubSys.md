@@ -2,6 +2,200 @@
 
 * [linux kernel的中断子系统之（七）：GIC代码分析](http://www.wowotech.net/irq_subsystem/gic_driver.html)
 
+#  中断相关机制
+
+## 1 内核定时器
+
+#### 1.0 引言
+
+内核定时器是一种软中断，记住两大要素，就相当于掌握了寄存器，**超时时间**和**超时之后做什么**，好的驱动程序，贴合面向对象的思想，会将定时器结构体作为成员变量
+
+#### 1.1 框架描述-旧内核
+
+**a. 在设备自定义结构体中加入struct timer_list成员**
+
+```c
+struct xxx_dev{
+	//...
+	struct timer_list xxx_timer;
+} ;
+```
+
+**b. 编写超时处理函数**
+
+```c
+static void xxx_timer_expire(unsigned long data)
+{
+	//...
+}
+```
+
+**c. probe中调用setup_timer初始化定时器，包括定时器结构体及超时时间成员**
+
+```c
+setup_timer(timer, fn, data);
+//e.g.
+setup_timer(&xxx_dev.key_timer, key_timer_expire, &xxx_dev);
+xxx_dev.xxx_timer.expires = ~0;
+```
+
+**d. 调用add_timer添加定时器**
+
+```c
+add_timer(&xxx_dev.xxx_timer);
+```
+
+**e. 中断或者需要定时的地方，调用mod_timer**
+
+```c
+int mod_timer(struct timer_list *timer, unsigned long expires);
+//e.g.
+mod_timer(&xxx_dev->xxx_timer, jiffies + HZ/50);	//CONFIG_HZ=100条件下，定时20ms
+```
+
+其中**jiffies**为全局变量，记录从起始到现在经过了多少滴答，滴答由CONFIG_HZ来设置。
+
+**f. remove，调用del_timer删除定时器**
+
+```c
+int del_timer(struct timer_list *timer);
+```
+
+其中**jiffies**为全局变量，记录从起始到现在经过了多少滴答，滴答由CONFIG_HZ来设置。
+
+#### 1.2 框架描述-新内核需要修改
+
++ **超时处理函数需要修改**
+
+```c
+static void key_timer_expire(struct timer_list *t)
+{
+	struct xxx_dev *xxx_dev_m = from_timer(xxx_dev_m, t, xxx_timer);
+	//...
+}
+```
+
++ **初始化定时器函数发生变化**
+
+```c
+void timer_setup(struct timer_list *timer,void (*callback)(struct timer_list *),unsigned int flags);
+```
+
+参数flags一般取NULL，/include/linux/timer.h + 60，等后期实际项目遇到了再填坑。
+
+该函数无法直接传入data，只能在超时回调函数中通过参量**t**进行间接提取。
+
++ **在超时回调函数中调用from_timer函数反推数据**
+
+```c
+from_timer(var, callback_timer, timer_fieldname)
+```
+
+参数**var**表示需要反推的变量，参数**callback_timer**表示timer_list，参数**timer_fieldname**表示定时器在数据结构体中的名字。
+
+## 2 中断下半部-tasklet
+
+#### 2.0 引言
+
+**taklet**是一种软件中断，它用于解决硬件中断不好处理的一些费时工作，在使用过程中，可以在硬件中断中调度**tasklet**，由内核自动完成**tasklet**的运行，同一硬件中断无论发生多少次，**tasklet**只会执行一次，因此是多对一的关系。
+
+#### 2.1 框架描述
+
+**a. 定义tasklet_struct结构体**
+
+```c
+struct tasklet_struct tasklet;
+```
+
+**b. 定义tasklet处理函数**
+
+```c
+static void xxx_tasklet_func(unsigned long data){	//...}
+```
+
+**c. probe函数调用tasklet_init初始化tasklet**
+
+```c
+void tasklet_init(struct tasklet_struct *t, void (*func)(unsigned long), unsigned long data);//e.g.tasklet_init(&tasklet, xxx_tasklet_func, &data);
+```
+
+**d. 在中断服务程序中调用tasklet_schedule调度tasklet，即把tasklet放入队列**
+
+```c
+void tasklet_schedule(struct tasklet_struct *tasklet);
+```
+
+**e. remove函数调用tasklet_kill注销tasklet**
+
+```c
+void tasklet_kill(struct tasklet_struct *t);
+```
+
+## 3 工作队列-workqueue
+
+#### 3.0 引言
+
+无论是**硬中断**还是**tasklet**，进程都会陷入内核态一直执行，此时如果用户态需要进行一些紧急的事情，就要使用一种新的机制来解决这种应用场景，这种机制叫做**工作队列**，该机制会使用内核线程执行内核态代码，用户态可以与内核态平等的竞争执行机会。**既然是队列**，需要排队执行任务，因此这种机制不适合处理耗时较长的工作，对于这种，就单独的创建线程吧。
+
+#### 3.1 框架描述
+
+**a. 定义work_struct结构体**
+
+```c
+struct work_struct m_work;
+```
+
+**b. 定义work处理函数**
+
+```c
+static void xxx_work_func(struct work_struct *work){	struct gpio_key *gpio_key = container_of(work, struct xxx_dev, m_work);}
+```
+
+**c. 调用INIT_WORK初始化work_struct**
+
+```c
+INIT_WORK(m_work, xxx_work_func);
+```
+
+**d. 在中断服务程序中调用schedule_work调度work，即把work放入队列**
+
+```c
+bool schedule_work(struct work_struct *work);
+```
+
+## 4 中断的线程化处理
+
+#### 4.0 引言
+
+中断的线程化处理就是解决**工作队列**把所有**work**全都挤在一个线程的问题，使中断能有自己的线程来执行下半部代码。
+
+#### 4.1 框架描述
+
+**a. 定义中断上半部处理函数，并返回IRQ_WAKE_THREAD**
+
+```c
+static irqreturn_t xxx_isr(int irq, void *dev_id){	//...	return IRQ_WAKE_THREAD;}
+```
+
+**b. 定义中断下半部处理函数，并返回IRQ_HANDLED**
+
+```c
+static irqreturn_t xxx_thread_func(int irq, void *dev_id){	//...		return IRQ_HANDLED;}
+```
+
+**c. probe函数中调用request_threaded_irq初始化中断**
+
+```c
+int request_threaded_irq(unsigned int irq, irq_handler_t handler,			 irq_handler_t thread_fn, unsigned long irqflags,			 const char *devname, void *dev_id);//e.g.err = request_threaded_irq(irq, xxx_isr, xxx_thread_func, IRQF_TRIGGER_RISING, "xxx", &data);
+```
+
+其中参数**irq**代表中断号，参数**irqflags**代表触发中断的条件，对于GPIO有**IRQF_TRIGGER_RISING**和**IRQF_TRIGGER_FALLING**。
+**d. remove函数中调用free_irq释放中断**
+
+```c
+void free_irq(unsigned int irq, void *dev_id);
+```
+
 # 中断触发流程
 
 ## 0. 中断框架(GPIO为例)
@@ -41,10 +235,6 @@
 ### 2.2 使能流程
 
 ![](pic/int/02_imx6ull_gic.png)
-
-### 2.3 GIC的寄存器
-
-[GIC寄存器](..\submd\GIC寄存器.md) 
 
 
 ## 3. CPU

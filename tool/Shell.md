@@ -244,6 +244,26 @@ $ strace -o log.txt ./app
 $ printenv PATH #打印某个变量，也可以用echo，而env无效
 ```
 
+#### vmware-toolbox-cmd
+
+* 虚拟机空间压缩
+
+```shell
+$ sudo vmware-toolbox-cmd disk list
+/
+/boot
+/home
+$ sudo vmware-toolbox-cmd disk shrink /
+```
+
+#### diff and patch
+
+```shell
+diff -Naur test/ test_new/ > test.patch
+cd test
+patch -p1 < ../test.patch	#p1代表忽略第一级目录
+```
+
 
 ## Shell
 

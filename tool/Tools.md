@@ -1,6 +1,36 @@
-## 内存压力测试
+## lrz
 
-* memtester
+* 用途
+
+  用于实现windows直接向linux进行文件传输，但速率较低
+
+* 下载
+
+```shell
+sudo make lrzsz-rebuild
+cd /home/liubo/work/buildroot/output/build/lrzsz-0.12.20
+sudo ./configure --host=~/tool/ToolChain-6.2.1/bin/arm-linux-gnueabihf --prefix=$PWD/tmp
+sudo make
+sudo make install
+cd tmp #bin目录就是工具
+
+#ps
+若存在
+lrz: error while loading shared libraries: libnsl.so.1: cannot open shared object file: No such file or directory
+则
+cp ./output/target/lib/libnsl-2.23.so -> 开发板的bin
+ln -s libnsl-2.23.so libnsl.so.1
+```
+
+* 使用
+
+```shell
+mobaxterm
+ctrl + 右键
+send file using Z-modem
+```
+
+## memtester
 
 memtester主要是捕获内存错误和一直处于很高或者很低的坏位, 其测试的主要项目有随机值,异或比较,减法,乘法,除法,与或运算等等. 通过给定测试内存的大小和次数, 可以对系统现有的内存进行上面项目的测试。
 
@@ -35,7 +65,7 @@ Loop 1/1:
 Done.
 ```
 
-## CPU压力测试
+## stress-ng
 
 * 查看负载
 
@@ -48,7 +78,7 @@ $ uptime
 * stress-ng
 
 ```shell
-$ ./stress-ng -c 2 -t 5 #开辟2个线程循环调用sqrt()，持续5s，
+$ ./stress-ng -c 40 -t 100 #开辟2个线程循环调用sqrt()，持续5s，
 -c N: 				生成N个worker循环调用sqrt()产生cpu压力
 -i N: 				生成N个worker循环调用sync()产生io压力
 -m N: 				生成N个worker循环调用malloc()/free()产生内存压力
@@ -56,16 +86,15 @@ $ ./stress-ng -c 2 -t 5 #开辟2个线程循环调用sqrt()，持续5s，
 -t N:				测试持续N秒
 -taskset N: 		将压力加到指定核心上
 --cpu-method all:	worker从迭代使用30多种不同的压力算法，包括pi, crc16, fft等等
-			  |
-			 \ /
-			 pi、crt16、fft...
 ```
 
+## openssh
 
-
-
-
-
+```shell
+$ sudo ./configure --host=/opt/ToolChain-6.2.1/bin/arm-linux-gnueabihf --prefix=$PWD/tmp --with-zlib=../libzlib-1.2.11 --with-ssl-dir=../libopenssl-1.1.1a --without-openssl-header-check
+$ sudo make
+$ sudo make install
+```
 
 
 

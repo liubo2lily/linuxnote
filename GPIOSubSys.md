@@ -69,8 +69,6 @@ mygpio {
 
 **示例代码**[virtual_gpio_driver.c](code\gpio\virtual_gpio_driver.c) 
 
-
-
 # 三、GPIO使用Pinctrl
 
 **GPIO和Pinctrl的映射关系**
