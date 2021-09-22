@@ -92,7 +92,7 @@ list_for_each_entry(f, &foolist, list_membername) {
     
 }
 // 反向则加_reverse后缀
-/* 遍历时删除，反向同理 */
+/* 加safe代表遍历时删除，反向同理 */
 list_for_each_entry_safe(pos, next, head, member);	//pos和next为同一类型，均为父对象类型
 ```
 

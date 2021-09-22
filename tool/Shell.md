@@ -264,6 +264,16 @@ cd test
 patch -p1 < ../test.patch	#p1代表忽略第一级目录
 ```
 
+#### chown/chgrp
+
+* 改变文件属主/属组
+
+```shell
+-R	#递归改变
+```
+
+
+
 
 ## Shell
 
@@ -289,5 +299,31 @@ $ (cmd1; cmd2) #加上括号，生成进程列表，即在子shell中运行
 ```shell
 $ export <value> 将变量导出到全局环境变量(没$)
 $ unset <value> 删除环境变量(没$)
+```
+
+#### 主启动文件
+
+`/etc/enviroment /etc/profile(会随系统更新而重置)`
+
+#### 数组变量
+
+```shell
+$ mytest=(one two three four five)
+$ echo ${mytest[2]}
+```
+
+#### 账户管理相关
+
+```shell
+$ useradd -D	#系统默认值，在/etc/default/useradd中
+-D -s <shell>
+$ sudo useradd -m <username>	#-m，创建home目录
+-p	#设置默认密码
+$ userdel -r <username>	#删除账户
+$ usermod -l <username>	#修改账户用户名
+$ passwd <username>	#修改用户密码
+$ sudo chmod u+x /etc/sudoers
+$ sudo vi /etc/sudoers #添加sudo权限
+$ sudo chmod u-x /etc/sudoers
 ```
 
