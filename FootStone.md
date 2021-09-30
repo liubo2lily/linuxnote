@@ -343,12 +343,12 @@ fcntl(fd, F_SETFL, flags & ~O_NONBLOCK);	/* Block */
 fcntl(fd, F_SETFL, flags | O_NONBLOCK);		/* Non-block */
 ```
 
-## 6. Concurrency Control
+## 6. Synchronization method
 
 * SMP-Symmetric Multi-Processors, UP-Uni-Processor(Divided by ARMv6)
-
 * ldrex r0, [r1] #r1 marked as exclusive
 * strex r2, r0, [r1] #r2 returns whether the opeation was successful
+* Sleep lock and Spin lock
 
 #### 6.1 Atomic variable
 
@@ -371,6 +371,9 @@ static int xxx_release (struct inode *node, struct file *file)
 
 #### 6.2 Spin Lock
 
+* `CONFIG_DEBUG_SPINLOCK`
+* `CONFIG_DEBUG_LOCK_ALLOC`
+
 ```c
 void spin_lock(spinlock_t *lock);
 int spin_trylock(spinlock_t *lock);
@@ -384,14 +387,30 @@ spin_lock_bh(&lock);
 spin_unlock_bh(&lock);
 ```
 
-#### 6.3 Semaphore
+#### 6.3 read/write Spin Lock
+
+```c
+DEFINE_RWLOCK(mr_rwlock);
+read_lock(&mr_rwlock);
+/* Critical zone */
+read_unlock(&mr_rwlock);
+
+write_lock(&mr_rwlock);
+/* Critical zone */
+write_unlock(&mr_rwlock);
+```
+
+#### 6.4 Semaphore
 
 ```c
 void down(struct semaphore *sem); /* _interruptible _killable(fatal signal) _trylock #return 0 means success */
 int down_timeout(struct semaphore *sem, long jiffies);
 void up(struct semaphore *sem);	/* release semaphore */
 /* for example */
-static DEFINE_SPINLOCK(clock_lock);
+struct semaphore name;
+sema_init(&name, count);
+//or
+sema_init(sem, count); // sem is a poniter to semaphore
 if (down_interruptible(&sem)) {
     return -ERESTARTSYS;
 }
@@ -399,7 +418,26 @@ if (down_interruptible(&sem)) {
 up(&sem);
 ```
 
-#### 6.4 mutex
+#### 6.5 Read/Write Semaphore
+
+```c
+static DECLEARE_RWSEM(mr_rwsem);
+//or
+init_rwsem(struct rw_semaphore * sem);
+down_read(&mr_rwsem);
+/* Critical zone */
+up_read(&mr_rwsem);
+
+down_write(&mr_rwsem);
+/* Critical zone */
+up_write(&mr_sem);
+
+downgrade_write(); // write semaphore to read semaphore
+```
+
+#### 6.6 mutex
+
+* `CONFIG_DEBUG_MUTEXES`
 
 ```c
 int mutex_is_locked(struct mutex *lock); /* 1 means locked */
@@ -412,4 +450,94 @@ mutex_lock(&mutex);
 //critical code
 mutex_unlock(&mutex);
 ```
+
+#### 6.7 Completion Variable
+
+* Notifies another thread of completion
+
+```c
+DECLEARE_COMPLETION(mr_comp);
+//or
+init_completion();
+wait_for_completion(struct completion *); //process 1
+complete(struct completion *);			  //process 2
+```
+
+#### 6.8 Seq Lock
+
+```c
+/* e.g. */
+seqlock_t xtime_lock = DEFINE_SEQLOCK(xtime_lock);
+u64 get_jiffies_64(void)
+{
+    unsigned long seq;
+    u64 ret;
+    
+    do {
+        seq = read_seqbegin(&xtime_lock);
+    } while (read_seqretry(&xtime_lock, seq));
+    return ret;
+}
+// in timer irq
+write_seqlock(&xtime_lock);
+jiffies_64 += 1;
+write_sequnlock(&xtime_lock);
+
+```
+
+#### 6.9 Disable Preempt(Nested)
+
+* For CPU private data
+
+```c
+preempt_disable();
+/* no preempt */
+preempt_enalbe();
+
+//---------
+preempt_count();	//return preempt count
+
+//Commonly used
+int cpu;
+cpu = get_cpu();	//auto call preempt_disable();
+/* code */
+put_cpu();			//auto call preempt_enalbe();
+```
+
+#### 6.10 Memory Barrier and Complier Barrier
+
+```c
+/* for memory */
+rmb();
+read_barrier_depands();
+wmb();
+mb();
+/* for complier */
+barrier();
+/* for smp support mb(), for up support barrier */
+smp_rmb();
+smp_read_barrier_depands();
+smp_wmb();
+smp_mb();
+```
+
+## 7. Time Management
+
+$$
+WallClockTime = BlockTime+ReadyTime+RunTime
+$$
+
+$$
+RunTime=UserCPUTime+KnernelCPUTime
+$$
+
+
+
+
+
+
+
+
+
+
 
